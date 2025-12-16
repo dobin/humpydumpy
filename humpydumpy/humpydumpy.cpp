@@ -100,7 +100,7 @@ bool resolve_func() {
 
 
 bool dump_process(DWORD pid) {
-	std::string dumpFileName = std::to_string(pid) + ".csv";
+	std::string dumpFileName = std::to_string(pid) + ".gif";
 
     HANDLE hFile = CreateFileA(dumpFileName.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
@@ -135,6 +135,7 @@ void deconditioning(unsigned int deconDumps) {
     std::vector<std::wstring> procsDump = {
         //L"ctfmon.exe", L"explorer.exe", L"ShellHost.exe", L"audiodg.exe"
         L"conhost.exe", L"cmd.exe", L"StartMenuExperienceHost.exe", L"ctfmon.exe"  // user processes
+        , L"explorer.exe"
     };
 
     for(int i=0; i<deconDumps; i++) {
