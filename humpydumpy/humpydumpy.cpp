@@ -128,6 +128,8 @@ bool dump_process(DWORD pid) {
 
     CloseHandle(hFile);
 	CloseHandle(hProcess);
+
+    return true;
 }
 
 
