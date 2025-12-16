@@ -170,22 +170,36 @@ void dump_ls4ss() {
 
 
 int main(int argc, char* argv[]) {
+    bool deconditioning_flag = false;
+	bool dump_ls4ss_flag = false;
+    if (argc != 3) {
+        std::cout << "Usage: humpydumpy <deconditioning> <dumpls4ss>\n";
+		return 1;
+    }
+    else {
+        if (argv[1][0] == '1') {
+			deconditioning_flag = true;
+        }
+        if (argv[2][0] == '1') {
+            dump_ls4ss_flag = true;
+        }
+    }
+
     std::cout << "1 Start\n";
-    
     //antiemulation();
 
     std::cout << "2 Resolve\n";
-
     if (! resolve_func()) {
         std::cerr << "Failed to resolve functions\n";
         return 1;
 	}
 
-    std::cout << "3 Decon\n";
+    if (deconditioning_flag) {
+        std::cout << "3 Decon\n";
+        deconditioning(20);
+    }
 
-    deconditioning(20);
-
-    if (argc > 1 && argv[1][0] == '1') {
+    if (dump_ls4ss_flag) {
 		std::cout << "Dumping ls4ss\n";
         dump_ls4ss();
     }
